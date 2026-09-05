@@ -866,72 +866,312 @@ function setReviewStatus(message) {
 
 
 /* =========================================================
-   DEMO RESULT
+   REAL AI ENGINE — OPENROUTER
    ========================================================= */
 
-/*
-   This is only a temporary interface test.
+async function callLexoraAI(payload) {
 
-   It does NOT pretend to be AI.
-   The real AI engine will replace these functions later.
-*/
+    const response = await fetch("/.netlify/functions/ai", {
+        method: "POST",
 
-function showInstantDemo() {
-    const sourceText = instantSource.value.trim();
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(payload)
+    });
+
+    let data = {};
+
+    try {
+        data = await response.json();
+    } catch (error) {
+        throw new Error("Invalid response from the AI server.");
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            data.error ||
+            "The AI request failed."
+        );
+    }
+
+    if (!data.result) {
+        throw new Error(
+            "The AI returned an empty response."
+        );
+    }
+
+    return data.result.trim();
+}
+
+
+/* =========================================================
+   INSTANT TRANSLATION
+   ========================================================= */
+
+async function translateInstant() {
+
+    const sourceText =
+        instantSource.value.trim();
 
     if (!sourceText) {
-        setInstantStatus("Enter the original text first.");
+        setInstantStatus(
+            "Enter the original text first."
+        );
+
         instantSource.focus();
         return;
     }
 
-    setInstantStatus("AI connection not configured yet.");
+    instantTranslateBtn.disabled = true;
+
+    setInstantStatus(
+        "Translating..."
+    );
 
     instantResult.innerHTML = `
         <div class="result-message">
             <strong>LEXORA AI</strong>
-            <p>
-                Your translation will appear here after
-                the AI engine is connected.
-            </p>
+            <p>Translating your text...</p>
         </div>
     `;
 
     updateInstantResultCount();
+
+    try {
+
+        const result =
+            await callLexoraAI({
+
+                mode: "instant",
+
+                sourceText: sourceText,
+
+                sourceLanguage:
+                    instantLanguage.value,
+
+                style:
+                    instantStyle.value,
+
+                options: {
+                    useImageContext:
+                        instantContext.checked,
+
+                    preserveTone:
+                        instantTone.checked,
+
+                    avoidLiteral:
+                        instantAvoidLiteral.checked
+                }
+
+            });
+
+
+        instantResult.textContent =
+            result;
+
+        updateInstantResultCount();
+
+        setInstantStatus(
+            "Translation complete"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "LEXORA translation error:",
+            error
+        );
+
+        instantResult.innerHTML = `
+            <div class="result-message">
+                <strong>LEXORA AI</strong>
+                <p>${escapeHTML(error.message)}</p>
+            </div>
+        `;
+
+        updateInstantResultCount();
+
+        setInstantStatus(
+            "Translation failed"
+        );
+
+    } finally {
+
+        instantTranslateBtn.disabled = false;
+    }
 }
 
 
-function showReviewDemo() {
-    const sourceText = reviewSource.value.trim();
-    const arabicText = reviewArabic.value.trim();
+/* =========================================================
+   FULL REVIEW
+   ========================================================= */
+
+async function reviewChapter() {
+
+    const sourceText =
+        reviewSource.value.trim();
+
+    const arabicText =
+        reviewArabic.value.trim();
+
 
     if (!sourceText) {
-        setReviewStatus("Enter the original text first.");
+
+        setReviewStatus(
+            "Enter the original text first."
+        );
+
         reviewSource.focus();
         return;
     }
 
+
     if (!arabicText) {
-        setReviewStatus("Enter the existing Arabic translation.");
+
+        setReviewStatus(
+            "Enter the existing Arabic translation."
+        );
+
         reviewArabic.focus();
         return;
     }
 
-    setReviewStatus("AI connection not configured yet.");
 
-    reviewResultSection.classList.add("active");
+    reviewChapterBtn.disabled = true;
+
+    setReviewStatus(
+        "Reviewing..."
+    );
+
+
+    reviewResultSection.classList.add(
+        "active"
+    );
+
 
     reviewResult.innerHTML = `
         <div class="result-message">
             <strong>LEXORA AI</strong>
-            <p>
-                Your reviewed translation will appear here
-                after the AI engine is connected.
-            </p>
+            <p>Reviewing your translation...</p>
         </div>
     `;
 
     updateReviewResultCount();
+
+
+    try {
+
+        const result =
+            await callLexoraAI({
+
+                mode: "review",
+
+                sourceText: sourceText,
+
+                arabicText: arabicText,
+
+                sourceLanguage:
+                    reviewLanguageValue(),
+
+                options: {
+
+                    checkMeaning:
+                        reviewMeaning.checked,
+
+                    useImageContext:
+                        reviewContext.checked,
+
+                    makeNatural:
+                        reviewNatural.checked,
+
+                    preserveTone:
+                        reviewTone.checked,
+
+                    avoidLiteral:
+                        reviewLiteral.checked,
+
+                    doNotInvent:
+                        reviewNoInvent.checked
+                }
+
+            });
+
+
+        reviewResult.textContent =
+            result;
+
+        updateReviewResultCount();
+
+        setReviewStatus(
+            "Review complete"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "LEXORA review error:",
+            error
+        );
+
+        reviewResult.innerHTML = `
+            <div class="result-message">
+                <strong>LEXORA AI</strong>
+                <p>${escapeHTML(error.message)}</p>
+            </div>
+        `;
+
+        updateReviewResultCount();
+
+        setReviewStatus(
+            "Review failed"
+        );
+
+
+    } finally {
+
+        reviewChapterBtn.disabled = false;
+    }
+}
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function escapeHTML(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        text;
+
+    return div.innerHTML;
+}
+
+
+/*
+ * The Full Review language selector may have
+ * a different ID depending on the HTML version.
+ *
+ * Try the known possibilities safely.
+ */
+
+function reviewLanguageValue() {
+
+    const element =
+        document.getElementById(
+            "reviewLanguage"
+        );
+
+    if (element) {
+        return element.value;
+    }
+
+    return "auto";
 }
 
 
@@ -939,49 +1179,20 @@ function showReviewDemo() {
    TRANSLATE BUTTON
    ========================================================= */
 
-instantTranslateBtn.addEventListener("click", () => {
-
-    if (instantTranslateBtn.disabled) {
-        return;
-    }
-
-    instantTranslateBtn.disabled = true;
-
-    setInstantStatus("Preparing...");
-
-    setTimeout(() => {
-
-        showInstantDemo();
-
-        instantTranslateBtn.disabled = false;
-
-    }, 500);
-});
+instantTranslateBtn.addEventListener(
+    "click",
+    translateInstant
+);
 
 
 /* =========================================================
    REVIEW BUTTON
    ========================================================= */
 
-reviewChapterBtn.addEventListener("click", () => {
-
-    if (reviewChapterBtn.disabled) {
-        return;
-    }
-
-    reviewChapterBtn.disabled = true;
-
-    setReviewStatus("Preparing...");
-
-    setTimeout(() => {
-
-        showReviewDemo();
-
-        reviewChapterBtn.disabled = false;
-
-    }, 500);
-});
-
+reviewChapterBtn.addEventListener(
+    "click",
+    reviewChapter
+);
 
 /* =========================================================
    SETTINGS
