@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEXORA — Visual AI Translation Workspace</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark">L</div>
+
+            <div>
+                <h1>LEXORA</h1>
+                <p>Visual AI Translation Workspace</p>
+            </div>
+        </div>
+
+        <div class="top-actions">
+            <button id="themeBtn" class="icon-btn" type="button">
+                Theme
+            </button>
+
+            <button id="settingsBtn" class="icon-btn" type="button">
+                Settings
+            </button>
+        </div>
+    </header>
+
+
+    <main class="workspace">
+
+        <!-- MODE SELECTOR -->
+        <section class="mode-selector">
+
+            <button class="mode-card active" data-mode="instant" type="button">
+                <span class="mode-number">01</span>
+
+                <div>
+                    <h2>Instant Translate</h2>
+                    <p>
+                        Translate source text into natural Arabic instantly.
+                    </p>
+                </div>
+
+                <span class="mode-arrow">→</span>
+            </button>
+
+
+            <button class="mode-card" data-mode="review" type="button">
+                <span class="mode-number">02</span>
+
+                <div>
+                    <h2>Full Review</h2>
+                    <p>
+                        Review and correct a complete translation using RAW context.
+                    </p>
+                </div>
+
+                <span class="mode-arrow">→</span>
+            </button>
+
+        </section>
+
+
+        <!-- ================================================== -->
+        <!-- INSTANT TRANSLATE -->
+        <!-- ================================================== -->
+
+        <section id="instantMode" class="tool-mode active">
+
+            <div class="mode-heading">
+                <div>
+                    <span class="eyebrow">01 / INSTANT TRANSLATE</span>
+                    <h2>Translate text directly.</h2>
+
+                    <p>
+                        Paste Korean, Chinese, or English text and get a natural
+                        Arabic translation.
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="translation-layout">
+
+                <!-- SOURCE -->
+                <div class="editor-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-label">SOURCE</span>
+                            <h3>Original Text</h3>
+                        </div>
+
+                        <select id="instantLanguage">
+                            <option value="auto">Auto Detect</option>
+                            <option value="korean">Korean</option>
+                            <option value="chinese">Chinese</option>
+                            <option value="english">English</option>
+                            <option value="japanese">Japanese</option>
+                        </select>
+                    </div>
+
+
+                    <textarea
+                        id="instantSource"
+                        placeholder="Paste your source text here..."
+                    ></textarea>
+
+
+                    <div class="editor-footer">
+                        <span id="instantCharCount">0 characters</span>
+
+                        <button
+                            id="clearInstant"
+                            class="text-btn"
+                            type="button"
+                        >
+                            Clear
+                        </button>
+                    </div>
+
+                </div>
+
+
+                <!-- CENTER -->
+                <div class="translation-center">
+
+                    <div class="flow-line"></div>
+
+                    <div class="translate-badge">
+                        LEXORA
+                    </div>
+
+                    <div class="flow-label">
+                        SOURCE
+                        <span>→</span>
+                        ARABIC
+                    </div>
+
+                </div>
+
+
+                <!-- RESULT -->
+                <div class="editor-panel result-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-label">OUTPUT</span>
+                            <h3>Arabic Translation</h3>
+                        </div>
+
+                        <span class="language-tag">AR</span>
+                    </div>
+
+
+                    <div
+                        id="instantResult"
+                        class="result-editor"
+                    >
+                        <span class="placeholder">
+                            Your Arabic translation will appear here...
+                        </span>
+                    </div>
+
+
+                    <div class="editor-footer">
+
+                        <span id="instantResultCount">
+                            0 characters
+                        </span>
+
+                        <div class="result-actions">
+
+                            <button
+                                id="copyInstant"
+                                class="text-btn"
+                                type="button"
+                            >
+                                Copy
+                            </button>
+
+                            <button
+                                id="exportInstant"
+                                class="text-btn"
+                                type="button"
+                            >
+                                Export Word
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- OPTIONAL RAW -->
+            <div class="optional-context">
+
+                <div class="section-title">
+                    <div>
+                        <span class="panel-label">OPTIONAL</span>
+                        <h3>Visual Context</h3>
+                    </div>
+
+                    <span class="optional-tag">NOT REQUIRED</span>
+                </div>
+
+
+                <div
+                    id="instantDropzone"
+                    class="context-dropzone"
+                >
+
+                    <input
+                        id="instantImages"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        hidden
+                    >
+
+                    <div class="upload-icon">+</div>
+
+                    <div>
+                        <strong>Add RAW images</strong>
+
+                        <p>
+                            Optional. Images help LEXORA understand visual context.
+                        </p>
+                    </div>
+
+                    <button
+                        id="instantBrowse"
+                        class="secondary-btn"
+                        type="button"
+                    >
+                        Browse
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="instantImageList"
+                    class="image-list"
+                ></div>
+
+            </div>
+
+
+            <!-- TRANSLATION OPTIONS -->
+            <div class="options-panel">
+
+                <div class="option-block">
+
+                    <span class="panel-label">STYLE</span>
+
+                    <select id="instantStyle">
+                        <option value="natural">
+                            Natural & Simple
+                        </option>
+
+                        <option value="maximum">
+                            Maximum Simplification
+                        </option>
+
+                        <option value="literal">
+                            Literal
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <label class="check-option">
+                    <input
+                        id="instantContext"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Use image context
+                    </span>
+                </label>
+
+
+                <label class="check-option">
+                    <input
+                        id="instantTone"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Preserve character tone
+                    </span>
+                </label>
+
+
+                <label class="check-option">
+                    <input
+                        id="instantAvoidLiteral"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Avoid literal translation
+                    </span>
+                </label>
+
+            </div>
+
+
+            <div class="action-area">
+
+                <button
+                    id="instantTranslateBtn"
+                    class="primary-btn"
+                    type="button"
+                >
+                    <span>Translate</span>
+                    <span>→</span>
+                </button>
+
+                <span id="instantStatus" class="status">
+                    Ready
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================== -->
+        <!-- FULL REVIEW -->
+        <!-- ================================================== -->
+
+        <section id="reviewMode" class="tool-mode">
+
+            <div class="mode-heading">
+
+                <div>
+                    <span class="eyebrow">02 / FULL REVIEW</span>
+
+                    <h2>Review the entire chapter.</h2>
+
+                    <p>
+                        Compare RAW images, original text, and the existing Arabic
+                        translation to produce a corrected final version.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- RAW CHAPTER -->
+            <div class="review-section">
+
+                <div class="review-section-header">
+
+                    <div>
+                        <span class="section-index">01</span>
+
+                        <div>
+                            <span class="panel-label">VISUAL SOURCE</span>
+                            <h3>RAW Chapter</h3>
+                        </div>
+                    </div>
+
+                    <span class="file-info">
+                        Multiple images supported
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="reviewDropzone"
+                    class="chapter-dropzone"
+                >
+
+                    <input
+                        id="reviewImages"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        hidden
+                    >
+
+                    <div class="chapter-upload-mark">
+                        +
+                    </div>
+
+                    <div class="chapter-upload-text">
+
+                        <h3>Upload RAW chapter</h3>
+
+                        <p>
+                            Add all chapter pages in their original order.
+                        </p>
+
+                    </div>
+
+                    <button
+                        id="reviewBrowse"
+                        class="secondary-btn"
+                        type="button"
+                    >
+                        Browse Files
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="reviewImageList"
+                    class="review-image-list"
+                ></div>
+
+            </div>
+
+
+            <!-- ORIGINAL TEXT -->
+            <div class="review-section">
+
+                <div class="review-section-header">
+
+                    <div>
+                        <span class="section-index">02</span>
+
+                        <div>
+                            <span class="panel-label">SOURCE TEXT</span>
+                            <h3>Original Text</h3>
+                        </div>
+                    </div>
+
+
+                    <select id="reviewLanguage">
+
+                        <option value="auto">
+                            Auto Detect
+                        </option>
+
+                        <option value="korean">
+                            Korean
+                        </option>
+
+                        <option value="chinese">
+                            Chinese
+                        </option>
+
+                        <option value="english">
+                            English
+                        </option>
+
+                        <option value="japanese">
+                            Japanese
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <textarea
+                    id="reviewSource"
+                    class="chapter-textarea"
+                    placeholder="Paste the complete original chapter text here..."
+                ></textarea>
+
+
+                <div class="editor-footer">
+                    <span id="reviewSourceCount">
+                        0 characters
+                    </span>
+
+                    <button
+                        id="clearReviewSource"
+                        class="text-btn"
+                        type="button"
+                    >
+                        Clear
+                    </button>
+                </div>
+
+            </div>
+
+
+            <!-- EXISTING ARABIC -->
+            <div class="review-section">
+
+                <div class="review-section-header">
+
+                    <div>
+                        <span class="section-index">03</span>
+
+                        <div>
+                            <span class="panel-label">EXISTING TRANSLATION</span>
+                            <h3>Arabic Translation</h3>
+                        </div>
+                    </div>
+
+                    <span class="language-tag">
+                        AR
+                    </span>
+
+                </div>
+
+
+                <textarea
+                    id="reviewArabic"
+                    class="chapter-textarea"
+                    placeholder="Paste the existing Arabic translation here..."
+                ></textarea>
+
+
+                <div class="editor-footer">
+
+                    <span id="reviewArabicCount">
+                        0 characters
+                    </span>
+
+                    <button
+                        id="clearReviewArabic"
+                        class="text-btn"
+                        type="button"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- REVIEW RULES -->
+            <div class="review-rules">
+
+                <div class="rules-heading">
+
+                    <span class="panel-label">
+                        REVIEW ENGINE
+                    </span>
+
+                    <h3>
+                        Translation priorities
+                    </h3>
+
+                </div>
+
+
+                <div class="rules-grid">
+
+                    <label class="rule-item">
+                        <input
+                            id="reviewMeaning"
+                            type="checkbox"
+                            checked
+                        >
+
+                        <span>
+                            Check meaning against the original
+                        </span>
+                    </label>
+
+
+                    <label class="rule-item">
+                        <input
+                            id="reviewContext"
+                            type="checkbox"
+                            checked
+                        >
+
+                        <span>
+                            Use RAW visual context
+                        </span>
+                    </label>
+
+
+                    <label class="rule-item">
+                        <input
+                            id="reviewNatural"
+                            type="checkbox"
+                            checked
+                        >
+
+                        <span>
+                            Make Arabic natural and simple
+                        </span>
+                    </label>
+
+
+                    <label class="rule-item">
+                        <input
+                            id="reviewTone"
+                            type="checkbox"
+                            checked
+                        >
+
+                        <span>
+                            Preserve character tone
+                        </span>
+                    </label>
+
+
+                    <label class="rule-item">
+                        <input
+                            id="reviewLiteral"
+                            type="checkbox"
+                            checked
+                        >
+
+                        <span>
+                            Avoid literal phrasing
+                        </span>
+                    </label>
+
+
+                    <label class="rule-item">
+                        <input
+                            id="reviewNoInvent"
+                            type="checkbox"
+                            checked
+                        >
+
+                        <span>
+                            Do not invent meaning
+                        </span>
+                    </label>
+
+                </div>
+
+            </div>
+
+
+            <!-- REVIEW ACTION -->
+            <div class="action-area review-action">
+
+                <button
+                    id="reviewChapterBtn"
+                    class="primary-btn"
+                    type="button"
+                >
+                    <span>Review Chapter</span>
+                    <span>→</span>
+                </button>
+
+
+                <span
+                    id="reviewStatus"
+                    class="status"
+                >
+                    Ready
+                </span>
+
+            </div>
+
+
+            <!-- REVIEW RESULT -->
+            <div
+                id="reviewResultSection"
+                class="review-result hidden"
+            >
+
+                <div class="review-result-header">
+
+                    <div>
+                        <span class="panel-label">
+                            FINAL OUTPUT
+                        </span>
+
+                        <h3>
+                            Corrected Arabic Translation
+                        </h3>
+                    </div>
+
+
+                    <div class="result-actions">
+
+                        <button
+                            id="copyReview"
+                            class="secondary-btn"
+                            type="button"
+                        >
+                            Copy
+                        </button>
+
+                        <button
+                            id="exportReview"
+                            class="primary-small-btn"
+                            type="button"
+                        >
+                            Export Word
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="reviewResult"
+                    class="review-result-editor"
+                ></div>
+
+
+                <div class="editor-footer">
+
+                    <span id="reviewResultCount">
+                        0 characters
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+       <!-- SETTINGS PANEL -->
+    <aside
+        id="settingsPanel"
+        class="settings-panel"
+        aria-hidden="true"
+    >
+
+        <div class="settings-header">
+
+            <div>
+                <span class="panel-label">LEXORA</span>
+                <h2>Settings</h2>
+            </div>
+
+            <button
+                id="closeSettings"
+                class="icon-btn"
+                type="button"
+            >
+                Close
+            </button>
+
+        </div>
+
+
+        <div class="settings-content">
+
+            <div class="setting-row">
+
+                <div>
+                    <strong>Default style</strong>
+
+                    <p>
+                        Translation style used by default.
+                    </p>
+                </div>
+
+                <select id="defaultStyle">
+
+                    <option value="natural">
+                        Natural & Simple
+                    </option>
+
+                    <option value="maximum">
+                        Maximum Simplification
+                    </option>
+
+                    <option value="literal">
+                        Literal
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div>
+                    <strong>Preserve tone</strong>
+
+                    <p>
+                        Keep the character's intended tone.
+                    </p>
+                </div>
+
+                <input
+                    id="defaultTone"
+                    type="checkbox"
+                    checked
+                >
+
+            </div>
+
+
+            <div class="setting-row">
+
+                <div>
+                    <strong>Avoid literal translation</strong>
+
+                    <p>
+                        Prefer natural Arabic phrasing.
+                    </p>
+                </div>
+
+                <input
+                    id="defaultNatural"
+                    type="checkbox"
+                    checked
+                >
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <div
+        id="settingsOverlay"
+        class="settings-overlay"
+    ></div>
+
+
+    <!-- FOOTER -->
+    <footer class="footer">
+
+        <span>LEXORA</span>
+
+        <span>
+            Visual AI Translation Workspace
+        </span>
+
+    </footer>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
