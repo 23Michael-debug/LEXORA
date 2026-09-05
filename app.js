@@ -869,6 +869,39 @@ function setReviewStatus(message) {
    REAL AI ENGINE — OPENROUTER
    ========================================================= */
 
+async function fileToDataURL(file) {
+
+    return new Promise((resolve, reject) => {
+
+        const reader = new FileReader();
+
+        reader.onload = () => resolve(reader.result);
+
+        reader.onerror = () => {
+            reject(
+                new Error(
+                    `Could not read image: ${file.name}`
+                )
+            );
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+
+
+async function imagesToDataURLs(files) {
+
+    if (!files || files.length === 0) {
+        return [];
+    }
+
+    return Promise.all(
+        files.map((file) => fileToDataURL(file))
+    );
+}
+
+
 async function callLexoraAI(payload) {
 
     const response = await fetch("/.netlify/functions/ai", {
@@ -939,33 +972,42 @@ async function translateInstant() {
 
     updateInstantResultCount();
 
-    try {
+     try {
 
-        const result =
-            await callLexoraAI({
+    const images =
+        instantContext.checked
+            ? await imagesToDataURLs(
+                instantImageFiles
+            )
+            : [];
 
-                mode: "instant",
+    const result =
+        await callLexoraAI({
 
-                sourceText: sourceText,
+            mode: "instant",
 
-                sourceLanguage:
-                    instantLanguage.value,
+            sourceText: sourceText,
 
-                style:
-                    instantStyle.value,
+            sourceLanguage:
+                instantLanguage.value,
 
-                options: {
-                    useImageContext:
-                        instantContext.checked,
+            style:
+                instantStyle.value,
 
-                    preserveTone:
-                        instantTone.checked,
+            images: images,
 
-                    avoidLiteral:
-                        instantAvoidLiteral.checked
-                }
+            options: {
+                useImageContext:
+                    instantContext.checked,
 
-            });
+                preserveTone:
+                    instantTone.checked,
+
+                avoidLiteral:
+                    instantAvoidLiteral.checked
+            }
+
+        });
 
 
         instantResult.textContent =
@@ -1063,40 +1105,49 @@ async function reviewChapter() {
 
     try {
 
-        const result =
-            await callLexoraAI({
+    const images =
+        reviewContext.checked
+            ? await imagesToDataURLs(
+                reviewImageFiles
+            )
+            : [];
 
-                mode: "review",
+    const result =
+        await callLexoraAI({
 
-                sourceText: sourceText,
+            mode: "review",
 
-                arabicText: arabicText,
+            sourceText: sourceText,
 
-                sourceLanguage:
-                    reviewLanguageValue(),
+            arabicText: arabicText,
 
-                options: {
+            sourceLanguage:
+                reviewLanguageValue(),
 
-                    checkMeaning:
-                        reviewMeaning.checked,
+            images: images,
 
-                    useImageContext:
-                        reviewContext.checked,
+            options: {
 
-                    makeNatural:
-                        reviewNatural.checked,
+                checkMeaning:
+                    reviewMeaning.checked,
 
-                    preserveTone:
-                        reviewTone.checked,
+                useImageContext:
+                    reviewContext.checked,
 
-                    avoidLiteral:
-                        reviewLiteral.checked,
+                makeNatural:
+                    reviewNatural.checked,
 
-                    doNotInvent:
-                        reviewNoInvent.checked
-                }
+                preserveTone:
+                    reviewTone.checked,
 
-            });
+                avoidLiteral:
+                    reviewLiteral.checked,
+
+                doNotInvent:
+                    reviewNoInvent.checked
+            }
+
+        });
 
 
         reviewResult.textContent =
