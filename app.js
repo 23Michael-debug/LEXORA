@@ -869,38 +869,320 @@ function setReviewStatus(message) {
    REAL AI ENGINE — OPENROUTER
    ========================================================= */
 
-async function fileToDataURL(file) {
+/* =========================================================
+   LARGE RAW IMAGE PROCESSING
+   Automatically prepares very tall manga pages
+   before sending them to the Vision AI.
+   ========================================================= */
+
+const LEXORA_IMAGE_MAX_HEIGHT = 2200;
+const LEXORA_IMAGE_OVERLAP = 180;
+const LEXORA_IMAGE_MAX_WIDTH = 1400;
+const LEXORA_IMAGE_QUALITY = 0.84;
+
+
+/*
+ * Load an image file safely.
+ */
+function loadImageFile(file) {
 
     return new Promise((resolve, reject) => {
 
-        const reader = new FileReader();
+        const objectURL =
+            URL.createObjectURL(file);
 
-        reader.onload = () => resolve(reader.result);
+        const image =
+            new Image();
 
-        reader.onerror = () => {
+        image.onload = () => {
+
+            URL.revokeObjectURL(objectURL);
+
+            resolve(image);
+        };
+
+        image.onerror = () => {
+
+            URL.revokeObjectURL(objectURL);
+
             reject(
                 new Error(
-                    `Could not read image: ${file.name}`
+                    `Could not process image: ${file.name}`
                 )
             );
         };
 
-        reader.readAsDataURL(file);
+        image.src = objectURL;
     });
 }
 
 
-async function imagesToDataURLs(files) {
+/*
+ * Convert canvas into a compressed image.
+ */
+function canvasToDataURL(canvas) {
 
-    if (!files || files.length === 0) {
-        return [];
-    }
-
-    return Promise.all(
-        files.map((file) => fileToDataURL(file))
+    return canvas.toDataURL(
+        "image/jpeg",
+        LEXORA_IMAGE_QUALITY
     );
 }
 
+
+/*
+ * Prepare one RAW image.
+ *
+ * Short images are compressed normally.
+ * Very tall images are automatically split
+ * into overlapping sections.
+ */
+async function prepareImageForAI(file) {
+
+    const image =
+        await loadImageFile(file);
+
+    const originalWidth =
+        image.naturalWidth;
+
+    const originalHeight =
+        image.naturalHeight;
+
+    if (
+        !originalWidth ||
+        !originalHeight
+    ) {
+        throw new Error(
+            `Invalid image dimensions: ${file.name}`
+        );
+    }
+
+
+    /*
+     * Never upscale the original image.
+     */
+    const outputWidth =
+        Math.min(
+            originalWidth,
+            LEXORA_IMAGE_MAX_WIDTH
+        );
+
+
+    /*
+     * Keep the original aspect ratio.
+     */
+    const scale =
+        outputWidth /
+        originalWidth;
+
+    const scaledHeight =
+        Math.round(
+            originalHeight * scale
+        );
+
+
+    /*
+     * Normal image:
+     * compress it without splitting.
+     */
+    if (
+        scaledHeight <=
+        LEXORA_IMAGE_MAX_HEIGHT
+    ) {
+
+        const canvas =
+            document.createElement("canvas");
+
+        canvas.width =
+            outputWidth;
+
+        canvas.height =
+            scaledHeight;
+
+        const ctx =
+            canvas.getContext("2d");
+
+        ctx.imageSmoothingEnabled = true;
+
+        ctx.imageSmoothingQuality =
+            "high";
+
+        ctx.drawImage(
+            image,
+            0,
+            0,
+            outputWidth,
+            scaledHeight
+        );
+
+        return [
+            canvasToDataURL(canvas)
+        ];
+    }
+
+
+    /*
+     * Very tall image:
+     * split it vertically.
+     */
+    const sourceSectionHeight =
+        Math.floor(
+            LEXORA_IMAGE_MAX_HEIGHT /
+            scale
+        );
+
+    const sourceOverlap =
+        Math.floor(
+            LEXORA_IMAGE_OVERLAP /
+            scale
+        );
+
+
+    const parts = [];
+
+    let sourceTop = 0;
+
+
+    while (
+        sourceTop <
+        originalHeight
+    ) {
+
+        const remaining =
+            originalHeight -
+            sourceTop;
+
+        const sourceHeight =
+            Math.min(
+                sourceSectionHeight,
+                remaining
+            );
+
+        const renderedHeight =
+            Math.round(
+                sourceHeight *
+                scale
+            );
+
+
+        const canvas =
+            document.createElement("canvas");
+
+        canvas.width =
+            outputWidth;
+
+        canvas.height =
+            renderedHeight;
+
+
+        const ctx =
+            canvas.getContext("2d");
+
+        ctx.imageSmoothingEnabled = true;
+
+        ctx.imageSmoothingQuality =
+            "high";
+
+
+        ctx.drawImage(
+            image,
+            0,
+            sourceTop,
+            originalWidth,
+            sourceHeight,
+            0,
+            0,
+            outputWidth,
+            renderedHeight
+        );
+
+
+        parts.push(
+            canvasToDataURL(canvas)
+        );
+
+
+        /*
+         * Stop when the bottom is reached.
+         */
+        if (
+            sourceTop +
+            sourceHeight >=
+            originalHeight
+        ) {
+            break;
+        }
+
+
+        /*
+         * Keep a small overlap between sections.
+         */
+        const nextTop =
+            sourceTop +
+            sourceHeight -
+            sourceOverlap;
+
+
+        /*
+         * Safety guard.
+         */
+        if (
+            nextTop <=
+            sourceTop
+        ) {
+            break;
+        }
+
+        sourceTop =
+            nextTop;
+    }
+
+
+    return parts;
+}
+
+
+/*
+ * Prepare every selected RAW image automatically.
+ *
+ * Original file order is preserved.
+ * If one image becomes multiple sections,
+ * those sections remain together and ordered.
+ */
+async function imagesToDataURLs(files) {
+
+    if (
+        !files ||
+        files.length === 0
+    ) {
+        return [];
+    }
+
+
+    const preparedImages = [];
+
+
+    for (
+        let index = 0;
+        index < files.length;
+        index++
+    ) {
+
+        const file =
+            files[index];
+
+
+        const parts =
+            await prepareImageForAI(file);
+
+
+        preparedImages.push(
+            ...parts
+        );
+    }
+
+
+    return preparedImages;
+}
 
 async function callLexoraAI(payload) {
 
