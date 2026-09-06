@@ -1186,39 +1186,64 @@ async function imagesToDataURLs(files) {
 
 async function callLexoraAI(payload) {
 
-    const response = await fetch("/.netlify/functions/ai", {
-        method: "POST",
+    const response =
+        await fetch(
+            "/.netlify/functions/ai",
+            {
+                method: "POST",
 
-        headers: {
-            "Content-Type": "application/json"
-        },
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-        body: JSON.stringify(payload)
-    });
+                body:
+                    JSON.stringify(payload)
+            }
+        );
 
-    let data = {};
+
+    const rawResponse =
+        await response.text();
+
+
+    let data = null;
+
 
     try {
-        data = await response.json();
-    } catch (error) {
-        throw new Error("Invalid response from the AI server.");
-    }
+        data =
+            JSON.parse(rawResponse);
 
-    if (!response.ok) {
+    } catch (error) {
+
         throw new Error(
-            data.error ||
-            "The AI request failed."
+            `AI server returned an invalid response (HTTP ${response.status}).`
         );
     }
 
-    if (!data.result) {
+
+    if (!response.ok) {
+
+        throw new Error(
+            data?.error ||
+            `AI server error (HTTP ${response.status}).`
+        );
+    }
+
+
+    if (
+        typeof data?.result !== "string" ||
+        !data.result.trim()
+    ) {
+
         throw new Error(
             "The AI returned an empty response."
         );
     }
 
+
     return data.result.trim();
-}
+    }
 
 
 /* =========================================================
