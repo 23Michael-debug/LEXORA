@@ -508,23 +508,23 @@ Return ONLY the corrected Arabic translation.
                     },
 
                     body: JSON.stringify({
-                        model: "openrouter/free",
+    model: "minimax/minimax-m3:free",
 
-                        messages: [
-                            {
-                                role: "system",
-                                content: systemPrompt
-                            },
-                            {
-                                role: "user",
-                                content: userContent
-                            }
-                        ],
+    messages: [
+        {
+            role: "system",
+            content: systemPrompt
+        },
+        {
+            role: "user",
+            content: userContent
+        }
+    ],
 
-                        temperature: 0.2,
+    temperature: 0.2,
 
-                        max_tokens: 8000
-                    })
+    max_tokens: 8000
+})
                 }
             );
 
